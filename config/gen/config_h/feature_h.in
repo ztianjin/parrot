@@ -73,6 +73,11 @@ if (@va_ptr_type@ eq 'stack') {
 END_PRINT
 }
 
+my $va_ptr_floatval = @va_ptr_floatval@;
+print OUT <<"END_PRINT";
+#  define PARROT_VA_PTR_FLOATVAL $va_ptr_floatval
+END_PRINT
+
 print OUT <<'END_PRINT';
 
 /* signal stuff from config/auto/signal */

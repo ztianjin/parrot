@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2011, Parrot Foundation.
+Copyright (C) 2001-2012, Parrot Foundation.
 
 =head1 NAME
 
@@ -622,7 +622,7 @@ set_call_from_varargs(PARROT_INTERP,
             VTABLE_push_integer(interp, signature, va_arg(*args, INTVAL));
             break;
           case 'N':
-            VTABLE_push_float(interp, signature, va_arg(*args, FLOATVAL));
+            VTABLE_push_float(interp, signature, va_arg(*args, PARROT_VA_PTR_FLOATVAL));
             break;
           case '-':
             return;
@@ -744,7 +744,7 @@ Parrot_pcc_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC *obj),
             VTABLE_push_integer(interp, call_object, va_arg(args, INTVAL));
             break;
           case 'N':
-            VTABLE_push_float(interp, call_object, va_arg(args, FLOATVAL));
+            VTABLE_push_float(interp, call_object, va_arg(args, PARROT_VA_PTR_FLOATVAL));
             break;
           case 'S':
             VTABLE_push_string(interp, call_object, va_arg(args, STRING *));
