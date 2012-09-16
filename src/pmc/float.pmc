@@ -139,9 +139,9 @@ Returns a Parrot string representation of the number.
         const FLOATVAL val      = SELF.get_number();
 #if NUMVAL_SIZE != 8
         /* [GH #828] need to cast to double for varargs */
-        const double d          = fabs((double)val);
+        const PARROT_VA_PTR_FLOATVAL d = fabs((PARROT_VA_PTR_FLOATVAL)val);
         const char * const sign = val < 0 ? "-" : "";
-        return Parrot_sprintf_c(INTERP, "%s%.15g", sign, (double)val);
+        return Parrot_sprintf_c(INTERP, "%s%.15g", sign, d);
 #else
         return Parrot_sprintf_c(INTERP, FLOATVAL_FMT, val);
 #endif
