@@ -433,6 +433,10 @@ Parrot_interp_really_destroy(PARROT_INTERP, int exit_code, SHIM(void *arg))
     if (!interp->parent_interpreter)
         Parrot_runcore_destroy(interp);
 
+#ifdef PARROT_HAS_THREADS
+    Parrot_thread_destroy(interp);
+#endif
+
     /*
      * now all objects that need timely destruction should be finalized
      * so terminate the event loop
