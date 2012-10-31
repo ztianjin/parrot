@@ -136,9 +136,9 @@ Parrot_localtime_r(const time_t *t, struct tm *tm)
 
 Parrot wrapper around standard library C<asctime_r()> function.
 
-Solaris 8 added a third parameter.
+Solaris 8 added a third parameter 26 to restrict buffer overrides with bad tm values.
 See L<http://www.nntp.perl.org/group/perl.perl6.internals/2004/09/msg25534.html>
-However, with _POSIX_PTHREAD_SEMANTICS or _POSIX_C_SOURCE does is reverted.
+However, with _POSIX_PTHREAD_SEMANTICS or _POSIX_C_SOURCE it is reverted.
 
 =cut
 
