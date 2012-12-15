@@ -90,9 +90,8 @@ sub runstep {
         rpath                  => "-L",
         libparrot_soname       => "-install_name "
             . '"'
-            . $conf->data->get('libdir')
-            . '/libparrot'
-            . $conf->data->get('share_ext')
+            . '@executable_path/blib/lib/'
+            . "libparrot.$version$share_ext"
             . '"'
     );
     my $darwin_hints = "Darwin hints settings:\n";
