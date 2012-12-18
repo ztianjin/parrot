@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2010, Parrot Foundation.
+Copyright (C) 2001-2012, Parrot Foundation.
 
 =head1 NAME
 
@@ -258,13 +258,15 @@ mark_interp(PARROT_INTERP)
     if (!PMC_IS_NULL(interp->final_exception))
         Parrot_gc_mark_PMC_alive(interp, interp->final_exception);
 
-    if (interp->parent_interpreter)
-        mark_interp(interp->parent_interpreter);
+    if (!Interp_flags_TEST(interp, PARROT_IS_THREAD)) {
+        /* Do not ascend with threads, only walk down */
+        if (interp->parent_interpreter)
+            mark_interp(interp->parent_interpreter);
 
-    /* code should be read only and is currently not cloned into other threads
-     * so only mark it in the main thread */
-    if (! Interp_flags_TEST(interp, PARROT_IS_THREAD))
+        /* code should be read only and is currently not cloned into other threads
+         * so only mark it in the main thread */
         mark_code_segment(interp);
+    }
 }
 
 /*
