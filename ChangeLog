@@ -1,3 +1,13 @@
+2013-01-15    release 4.12.0
+    - Core
+        + Remove duplicate library search path entries, move "." from the beginning to
+          the end. [GH 368]
+    - Documentation
+        + Improved pdd10_embedding
+    - Tools
+    - Tests
+        + Added t/library/lib_search_path.t
+
 2012-12-18    release 4.11.0
     - Core
         + Parrot now supports fast and lightweight OS threads, based on Nat Tucks's
