@@ -25,6 +25,7 @@ use Parrot::Test tests => 2;
 use Parrot::Config;
 
 # Task stress with GC
+# Segfault #880
 {
     $ENV{TEST_PROG_ARGS} ||= '';
     my $parrot = File::Spec->join( File::Spec->curdir(), 'parrot' . $PConfig{exe} );
@@ -37,6 +38,7 @@ use Parrot::Config;
 
 
 # IO stress: trace pir output segfaults
+# ASSERT src/gc/gc_gms.c:1189: failed assertion '(pmc) == NULL || (pmc)->orig_interp == (interp)'
 {
     local $ENV{TEST_PROG_ARGS} .= '-t1';
 
