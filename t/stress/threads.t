@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2012, Parrot Foundation.
+# Copyright (C) 2012-2013, Parrot Foundation.
 
 =head1 NAME
 
@@ -13,7 +13,9 @@ t/stress/threads.t - Threads with Garbage Collection
 
 Tests threads stability under garbage collection.
 
-Also IO stress: Large -t trace pir output segfaults in GC
+Also IO stress: Large -t trace pir output segfaults in GC with empty self->work_list
+
+Some errors rely on -DTHREAD_DEBUG in CFLAGS and --debugging to get detected.
 
 =cut
 
