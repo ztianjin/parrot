@@ -1,13 +1,14 @@
 /*
-Copyright (C) 2001-2012, Parrot Foundation.
+Copyright (C) 2001-2013, Parrot Foundation.
 
 =head1 NAME
 
-src/platform/generic/socket.c - UNIX socket functions
+src/platform/generic/socket.c - POSIX socket functions
 
 =head1 DESCRIPTION
 
-This code implements UNIX socket functions for Parrot.
+This code implements POSIX socket functions for Parrot, valid for UNIX*
+and Win32 platforms.
 
 =head2 Functions
 
@@ -187,6 +188,19 @@ static int pio_sock[PIO_SOCK_MAX+1] = {
 /* HEADERIZER HFILE: none */
 
 /* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+PARROT_CANNOT_RETURN_NULL
+void * Parrot_io_internal_socket_optionname(PARROT_INTERP,
+    ARGIN(STRING *name))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+#define ASSERT_ARGS_Parrot_io_internal_socket_optionname \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(name))
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 /*
@@ -782,6 +796,31 @@ Parrot_io_internal_close_socket(SHIM_INTERP, PIOHANDLE handle)
 #else
     return close((PIOSOCKET)handle);
 #endif
+}
+
+INTVAL
+Parrot_io_internal_getsockopt(PARROT_INTERP, PIOHANDLE handle,
+                              ARGIN(INTVAL level), ARGIN(void *option_name),
+                              ARGMOD(INTVAL *value))
+{
+    /* Error handling upwards in src/io/socket.c */
+    return getsockopt((PIOSOCKET)handle, level, option_name, value, sizeof(value));
+}
+
+
+INTVAL
+Parrot_io_internal_setsockopt(PARROT_INTERP, PIOHANDLE handle,
+                              ARGIN(INTVAL level), ARGIN(void *option_name),
+                              ARGIN(INTVAL value))
+{
+    return setsockopt((PIOSOCKET)handle, level, option_name, &value, sizeof(value));
+}
+
+PARROT_CANNOT_RETURN_NULL
+void *
+Parrot_io_internal_socket_optionname(PARROT_INTERP, ARGIN(STRING *name))
+{
+    return NULL;
 }
 
 /*

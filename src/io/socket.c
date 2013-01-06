@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2011, Parrot Foundation.
+Copyright (C) 2001-2013, Parrot Foundation.
 
 =head1 NAME
 
@@ -495,7 +495,12 @@ io_socket_close(PARROT_INTERP, ARGMOD(PMC *handle))
 =item C<static void io_socket_set_flags(PARROT_INTERP, PMC *handle, INTVAL
 flags)>
 
-Do nothing.
+Set a single socket option via setsockopt() by a bitmasked value of
+level, option_name and option_value.
+
+4 bits for level,
+4 bits for option_name,
+the rest 24-56 bits for the option_value.
 
 =item C<static INTVAL io_socket_get_flags(PARROT_INTERP, PMC *handle)>
 
@@ -509,14 +514,18 @@ static void
 io_socket_set_flags(PARROT_INTERP, ARGIN(PMC *handle), INTVAL flags)
 {
     ASSERT_ARGS(io_socket_set_flags)
-    UNUSED(flags)
-    /* Ignore, for now */
+    PIOHANDLE os_handle;
+    UNUSED(flags);
+    GETATTR_Socket_os_handle(interp, handle, os_handle);
+    /* dissect level, name, value */
+    Parrot_io_internal_setsockopt(interp, os_handle, 0, 0, 0);
 }
 
 static INTVAL
 io_socket_get_flags(PARROT_INTERP, ARGIN(PMC *handle))
 {
     ASSERT_ARGS(io_socket_get_flags)
+    UNUSED(handle);
     /* For now, just say that all sockets are read/write handles */
     return PIO_F_WRITE | PIO_F_READ;
 }
