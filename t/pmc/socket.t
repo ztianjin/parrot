@@ -24,7 +24,7 @@ stack, so we don't need to check if this parrot is IPv6-aware.
 .sub main :main
     .include 'test_more.pir'
 
-    plan(25)
+    plan(28)
 
     test_init()
     test_get_fd()
@@ -39,6 +39,7 @@ stack, so we don't need to check if this parrot is IPv6-aware.
     test_udp_socket6()
     test_getprotobyname()
     test_server()
+    test_sockopt()
 
 .end
 
@@ -160,15 +161,11 @@ CODE
     test_create_socket(.PIO_PF_INET, .PIO_SOCK_DGRAM, .PIO_PROTO_UDP, 'Created a UDP Socket')
 .end
 
-.sub test_server
-    .local pmc interp, conf, server, sock, address, result
-    .local string command, str, part
-    .local int status, port
-
+.sub _server_cmdline
+    .local pmc interp, conf
+    .local string command, str
     interp = getinterp
     conf = interp[.IGLOBALS_CONFIG_HASH]
-
-  run_tests:
     command = '"'
     str = conf['build_dir']
     command .= str
@@ -178,6 +175,15 @@ CODE
     str = conf['exe']
     command .= str
     command .= '" t/pmc/testlib/test_server.pir'
+    .return (command)
+.end
+
+.sub test_server
+    .local pmc server, sock, address, result
+    .local string command, str, part
+    .local int status, port
+
+    command = _server_cmdline()
 
     server = new 'FileHandle'
     server.'open'(command, 'rp')
@@ -224,6 +230,64 @@ CODE
     status = server.'exit_status'()
     nok(status, 'Exit status of server process')
 .end
+
+
+.sub test_sockopt
+    .local pmc server, sock, address, result
+    .local string command, str, part
+    .local int status, port
+
+    command = _server_cmdline()
+
+    server = new 'FileHandle'
+    server.'open'(command, 'rp')
+    str = server.'readline'()
+    part = substr str, 0, 34
+    #is(part, 'Server started, listening on port ', 'Server process started')
+    part = substr str, 34, 4
+    port = part
+    sock = new 'Socket'
+    result = sock.'socket'(.PIO_PF_INET, .PIO_SOCK_STREAM, .PIO_PROTO_TCP)
+    sock.'setsockopt'(.PIO_SOL_SOCKET, .PIO_SO_REUSEADDR, 1)
+    # sock.'setsockopt'(.PIO_SOL_SOCKET, .PIO_SO_SNDLOWAT, 512)
+    # sock.'setsockopt'(.PIO_SOL_SOCKET, .PIO_SO_RCVLOWAT, 1024)
+
+    address = sock.'sockaddr'('localhost', port)
+    sock.'connect'(address)
+    status = sock.'send'('test message')
+    #is(status, '12', 'send')
+    str = sock.'recv'()
+    #is(str, 'test message', 'recv')
+
+    .local int i, len, oldlen, readlen
+    i = 0
+  loop:
+    str = concat str, "a"
+    i = i + 1
+    if i < 2048 goto loop
+    oldlen = length str
+    status = sock.'send'(str)
+    is(status, oldlen, 'send() big')
+    str = ""
+    .local string tmpstr
+  loop1:
+    tmpstr = sock.'read'(1024)
+    readlen = length tmpstr
+    is(readlen, 1024, 'SO_RCVLOWAT')
+    str = concat str, tmpstr
+    len = length str
+    diag(len)
+    if len == 0 goto bigger
+    if len < oldlen goto loop1
+  bigger:
+    is(len, oldlen, 'read(1024) chunked')
+
+    sock.'close'()
+    server.'close'()
+    status = server.'exit_status'()
+    #nok(status, 'Exit status of server process')
+.end
+
 
 # Local Variables:
 #   mode: pir
