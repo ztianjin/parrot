@@ -85,13 +85,17 @@ Gets a unique(*) ID for a PMC.
 This may or may not be based on the pointer of the PMC, but almost certainly is
 not the raw pointer value.
 
-(*) Uniqueness of these IDs is only guarranteed within code to which this PMC is
+However, across shared threads the writable object and the non-writable proxied
+object should return the same id.
+
+(*) Uniqueness of these IDs is only guaranteed within code to which this PMC is
 currently visible (ie: not across processes, or share-nothing threads, and not
 beyond the lifetime of the PMC).
 
 =cut
 
 inline op get_id(out INT, in PMC) {
+    /* TODO GH#1017: if proxy follow it */
     $1 = Parrot_hash_pointer((void *)$2, interp->hash_seed);
 }
 
