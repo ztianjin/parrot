@@ -585,7 +585,7 @@ Public interface to initialize imcc->write_pasm with -1 or 0.
 
 PARROT_EXPORT
 void
-imcc_set_to_pasm(ARGMOD(imc_info_t *imcc), ARGIN(Parrot_Int to_pasm))
+imcc_set_to_pasm(ARGMOD(imc_info_t *imcc), INTVAL to_pasm)
 {
     ASSERT_ARGS(imcc_set_to_pasm)
 

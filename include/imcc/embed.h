@@ -73,9 +73,8 @@ void imcc_set_optimization_level(
         FUNC_MODIFIES(*imcc);
 
 PARROT_EXPORT
-void imcc_set_to_pasm(ARGMOD(imc_info_t *imcc), ARGIN(Parrot_Int to_pasm))
+void imcc_set_to_pasm(ARGMOD(imc_info_t *imcc), INTVAL to_pasm)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
         FUNC_MODIFIES(*imcc);
 
 PARROT_EXPORT
