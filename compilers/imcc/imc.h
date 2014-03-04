@@ -227,6 +227,7 @@ int imcc_string_ends_with(
         FUNC_MODIFIES(* imcc);
 
 PARROT_IGNORABLE_RESULT
+PARROT_INLINE
 int /*@alt void@*/
 imcc_vfprintf(
     ARGMOD(imc_info_t * imcc),
@@ -483,12 +484,12 @@ struct _imc_info_t {
     AsmState              asm_state;
     SymHash               ghash;
     jmp_buf               jump_buf;          /* The jump for error  handling */
+    PIOHANDLE             write_pasm;
     int                   cnr;
     int                   debug;
     int                   dont_optimize;
     int                   emitter;
     int                   error_code;        /* The Error code. */
-    int                   expect_pasm;
     int                   imcc_warn;
     int                   in_pod;
     int                   ins_line;

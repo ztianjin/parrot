@@ -64,14 +64,6 @@ void IMCC_debug(
         __attribute__nonnull__(3)
         FUNC_MODIFIES(* imcc);
 
-void IMCC_debug_ins(
-    ARGMOD(imc_info_t * imcc),
-    int level,
-    ARGIN(const Instruction *ins))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(* imcc);
-
 PARROT_DOES_NOT_RETURN
 void IMCC_fatal(
     ARGMOD(imc_info_t * imcc),
@@ -152,6 +144,7 @@ void IMCC_warning(ARGMOD(imc_info_t * imcc), ARGIN(const char *fmt), ...)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: compilers/imcc/debug.c */
 
+void IMCC_debug_ins(imc_info_t *imcc, int level, const Instruction *ins);
 
 #endif /* PARROT_IMCC_DEBUG_H_GUARD */
 
