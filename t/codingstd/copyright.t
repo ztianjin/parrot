@@ -8,7 +8,7 @@ use lib qw( . lib ../lib ../../lib );
 use Cwd;
 use File::Spec ();
 use Parrot::Distribution;
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 =head1 NAME
 
@@ -47,13 +47,14 @@ my @files = @ARGV ? <@ARGV> : (
 my (
     @no_copyright_files,
     @bad_format_copyright_files,
+    @wrong_date_copyright_files,
     @duplicate_copyright_files,
 );
 
 my $copyright_simple =
     qr/Copyright \(C\) \d{4}/i;
 my $copyright_parrot =
-    qr/Copyright \(C\) (?:\d{4}\-)?\d{4}, Parrot Foundation\.\n/;
+    qr/Copyright \(C\) (\d{4}\-)?(\d{4}), Parrot Foundation\.\n/;
 
 foreach my $file (@files) {
 
@@ -73,6 +74,21 @@ foreach my $file (@files) {
     if ( $buf !~ $copyright_simple ) {
         push @no_copyright_files, $path;
         next;
+    }
+
+    if ( $buf =~ /$copyright_parrot/ and $ENV{TEST_SLOW}) {
+        my ($startyear, $endyear) = ($1, $2);
+        $startyear =~ s/-$// if $startyear;
+        $endyear = $startyear unless $endyear;
+        if ($path !~ m{(ext/|lib/Pod/).*\.pod$}) {
+            # see if they are up-to-date
+            my $g1 = `git log "$path" | grep '^Date' | tail -n 1`;
+            my $g2 = `git log "$path" | grep '^Date' | head -n 1`;
+            my ($y1) = $g1 =~ /^Date:.* (20\d\d) /;
+            my ($y2) = $g2 =~ /^Date:.* (20\d\d) /;
+            push @wrong_date_copyright_files, [ $path, $startyear, $endyear, $y1, $y2 ]
+              if ($startyear and $y1 ne $startyear) or ($y2 ne $endyear);
+        }
     }
 
     # is the copyright text correct?
@@ -96,24 +112,46 @@ END_SUGGESTION
 
 # run the tests
 ok( !scalar(@no_copyright_files), 'Copyright statement exists' )
-    or diag(
-    join
-        $/ => "No copyright statement found in " . scalar @no_copyright_files . " files:",
-    @no_copyright_files,
-    "The copyright statement should read something like:",
-    $suggested_version
-    );
+  or diag(
+          join
+          $/ => "No copyright statement found in " . scalar @no_copyright_files . " files:",
+          @no_copyright_files,
+          "The copyright statement should read something like:",
+          $suggested_version
+         );
 
-    ok( !scalar(@bad_format_copyright_files), 'Copyright statement in the right format' )
-        or diag(
-        join
-            $/ => "Bad format in copyright statement found in "
-            . scalar @bad_format_copyright_files
-            . " files:",
-        @bad_format_copyright_files,
-        "Please update to read something like:",
-        $suggested_version
-        );
+ok( !scalar(@bad_format_copyright_files), 'Copyright statement in the right format' )
+  or diag(
+          join
+          $/ => "Bad format in copyright statement found in "
+          . scalar @bad_format_copyright_files
+          . " files:",
+          @bad_format_copyright_files,
+          "Update to read something like:",
+          $suggested_version
+         );
+if ($ENV{TEST_SLOW}) {
+    if (scalar(@wrong_date_copyright_files)) {
+        ok( 0, 'Copyright statement with the right years' );
+        diag(
+             join
+                  $/ => "Bad year in copyright statement found in "
+                  . scalar @wrong_date_copyright_files
+                  . " files: ");
+        diag( join $/ => map
+              {
+                  $_->[0].":\t(C) ".($_->[1] ? $_->[1]."-" : "").$_->[2]." -> ".$_->[3]."-".$_->[4]
+              } @wrong_date_copyright_files);
+    }
+    else {
+        ok( 1, 'Copyright statement with the right years' );
+    }
+}
+else {
+  SKIP: {
+    skip 'set TEST_SLOW to check for the right years', 1;
+  }
+}
 
 # Certain files contain the string 'Copyright (c)' more than once
 # because they contain heredocs for generated files, correctly cite the
