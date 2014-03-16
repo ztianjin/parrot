@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2012, Parrot Foundation.
+# Copyright (C) 2001-2014, Parrot Foundation.
 
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ use Cwd;
 use File::Spec;
 use File::Path;
 
-my $MSWin32 = $^O =~ m!MSWin32!;
+my $MSWin32 = $^O =~ m!MSWin32|msys!;
 my $cygwin  = $^O =~ m!cygwin!;
 my $solaris = $^O =~ m!solaris!;
 my $MSVC = $PConfig{cc} =~ m/\bcl(?:\.exe)?/i;
