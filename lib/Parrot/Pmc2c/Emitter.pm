@@ -102,8 +102,7 @@ Examples:
 
 =item * Return Value
 
-Parrot::Pmc2c::Emitter object, apparently suitable for using as value for a
-C<body> key in a Parrot::Pmc2c::Method object.  B<MUST VERIFY>.
+Parrot::Pmc2c::Emitter object, used as C<body> in a Parrot::Pmc2c::Method object.
 
 =item * Comment
 
@@ -291,6 +290,27 @@ sub replace {
     }
     return 1;
 }
+
+=head2 C<add_write_barrier($method)>
+
+find last return and add PARROT_GC_WRITE_BARRIER before it
+
+=cut
+
+sub add_write_barrier {
+    my ( $self, $method, $pmc ) = @_;
+    my $need_result = $method->return_type && $method->return_type !~ 'void';
+    if ($need_result) {
+        warn "TODO GC write barrier to " . $pmc->name . "." . $method->name."\n";
+        $self->{data} .= "    /* need PARROT_GC_WRITE_BARRIER(interp, _self); before return */\n";
+    }
+    else {
+        #warn "Adding GC write barrier to " . $pmc->name . "." . $method->name."\n";
+        $self->{data} .= "    PARROT_GC_WRITE_BARRIER(interp, _self);\n";
+    }
+    return 1;
+}
+
 
 sub stringify {
     my ($self) = @_;

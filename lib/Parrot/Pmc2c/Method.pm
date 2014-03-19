@@ -205,14 +205,8 @@ sub generate_body {
 
     my $body = $self->body;
 
-    if ( $self->is_vtable || $self->name =~ '_orig') {
-        # UGLY HACK to rewrite original body of write-barriered vtable
-        my $orig_name = $self->name;
-        my $n = $self->name;
-        $n =~ s/_orig$//;
-        $self->name($n);
+    if ( $self->is_vtable ) {
         $self->rewrite_vtable_method($pmc);
-        $self->name($orig_name);
     }
     else {
         $self->rewrite_nci_method($pmc);
@@ -275,7 +269,7 @@ sub decl {
                   .$body->{data}."\n";
                 last;
             }
-            if ($key eq 'INTERP' or $key eq 'interp') {
+            if (($key eq 'INTERP' or $key eq 'interp') and !$self->{need_write_barrier}) {
                 $unused{INTERP}++;
                 $self->{interp_unused} = 1;
                 $body->{data} =~ s/^\s*UNUSED\($key\);?\n//m;
@@ -283,7 +277,7 @@ sub decl {
                   if $key eq 'interp'
                     and $self->{parent_name} ne 'Null'
                       and $body->{data} !~ /^\s*$/;
-            } elsif ($body->{data} =~ /^\s*UNUSED\(SELF\)/m) {
+            } elsif ($body->{data} =~ /^\s*UNUSED\(SELF\)/m and !$self->{need_write_barrier}) {
                 $unused{SELF}++;
                 $self->{pmc_unused} = 1;
                 $body->{data} =~ s/^\s*UNUSED\(SELF\);?\n//m;
@@ -294,8 +288,13 @@ sub decl {
             }
             else {
                 $body->{data} =~ s|^(\s*)UNUSED\($key\);?\n|$1/**/UNUSED\($key\)\n|m;
-                $unused{$key}++;
-                warn "Did not SHIM UNUSED($key) in $pmcname METHOD $meth\n";
+                if ($self->{need_write_barrier} and $key =~ /^interp|SELF$/i) {
+                    warn "Useless use of SHIM UNUSED($key) in $pmcname METHOD $meth: kept for write barrier\n";
+                }
+                else {
+                    $unused{$key}++;
+                    warn "Did not SHIM UNUSED($key) in $pmcname METHOD $meth\n";
+                }
                 last;
             }
         }
@@ -537,6 +536,9 @@ sub rewrite_vtable_method {
     # now use macros for all rewritten stuff
     $body->subst( qr{\b(?:\w+)->vtable->(\w+)\(}, sub { "VTABLE_$1(" } );
 
+    # add GC write barrier for writers
+    #if ($pmc->is_vtable_method($name)) {
+    #}
     return 1;
 }
 

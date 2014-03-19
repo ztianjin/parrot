@@ -745,32 +745,14 @@ sub post_method_gen {
         # Skip unimplemented methods
         next if $self->unimplemented_vtable($name);
 
+        # Skip for Proxy and Null, they just raise an exception
+        next if $self->name =~ /^Null|Proxy/;
+
         $method = $self->get_method($name);
 
-        #warn "Rewriting " . $self->name . "." . $name;
-        $self->add_method(
-            $method->clone({
-                name => $name.'_orig',
-                type => "ORIG",
-            })
-        );
-
         # Rewrite body with write barrier.
-        my $body;
-        my $need_result = $method->return_type && $method->return_type !~ 'void';
-
-        $body .= $method->return_type . " result;\nresult = " if $need_result;
-
-        # Get parameters.      strip type from param
-        my $parameters = join ', ',
-                         'INTERP', 'SELF', map { /\s*\*?(\S+)$/; $1 }
-                         split (/,/, $method->parameters);
-        $body .= $method->full_method_name($self->name) . "_orig($parameters);\n";
-
-        $body .= "PARROT_GC_WRITE_BARRIER(interp, _self);\n";
-        $body .= "return result;" if $need_result;
-
-        $method->body(Parrot::Pmc2c::Emitter->text($body) );
+        $method->{need_write_barrier} = 1;
+        $method->body->add_write_barrier($method, $self);
     }
 
     # generate PCC-variants for multis
