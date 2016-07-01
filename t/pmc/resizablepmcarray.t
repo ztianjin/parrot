@@ -1,5 +1,5 @@
 #!./parrot
-# Copyright (C) 2001-2009, Parrot Foundation.
+# Copyright (C) 2001-2011, Parrot Foundation.
 
 =head1 NAME
 
@@ -16,12 +16,15 @@ out-of-bounds test. Checks INT and PMC keys.
 
 =cut
 
+.include 'except_types.pasm'
+
 .sub main :main
     .include 'fp_equality.pasm'
     .include 'test_more.pir'
 
-    plan(142)
+    plan(146)
 
+    init_tests()
     resize_tests()
     negative_array_size()
     set_tests()
@@ -55,8 +58,20 @@ out-of-bounds test. Checks INT and PMC keys.
     equality_tests()
     sort_tailcall()
     push_to_subclasses_array()
+    test_assign_from_another()
+    test_assign_self()
+    test_assign_non_array()
 .end
 
+.sub init_negative
+    .local pmc p
+    p = new ['ResizablePMCArray'], -1
+.end
+
+.sub init_tests
+    .const 'Sub' negative = 'init_negative'
+    throws_type(negative, .EXCEPTION_OUT_OF_BOUNDS, 'new with negative size fails')
+.end
 
 .sub resize_tests
     .local pmc p
@@ -327,8 +342,8 @@ lp:
     unless it goto done
     $P0 = shift it
     $S0 = $P0
-    concat sorted, $S0
-    concat sorted, " "
+    sorted = concat sorted, $S0
+    sorted = concat sorted, " "
     goto lp
 done:
     is(sorted, "1 2 5 9 10 ", "inherited sort method works")
@@ -350,9 +365,9 @@ done:
     arr.'sort'(comparator)
     .local string s, aux
     s = typeof arr
-    concat s, ':'
+    s = concat s, ':'
     aux = join '-', arr
-    concat s, aux
+    s = concat s, aux
     is(s, 'ssRPA:z-p-a', "sort works in a pir subclass, TT #218")
 .end
 
@@ -491,8 +506,8 @@ done:
 loop:
     set $P2, $P1[$I0]
     typeof $S0, $P2
-    concat $S1, $S0
-    concat $S1, ","
+    $S1 = concat $S1, $S0
+    $S1 = concat $S1, ","
     inc $I0
     lt $I0, $I1, loop
 
@@ -835,7 +850,7 @@ loop:
     unless $P3 goto loop_end
     $P4 = shift $P3
     $S1 = $P4
-    concat $S0, $S1
+    $S0 = concat $S0, $S1
     goto loop
 loop_end:
     .return($S0)
@@ -993,8 +1008,8 @@ loop:
     unless it goto end
     $P2 = shift it
     $S0 = $P2
-    concat $S1, $S0
-    concat $S1, ","
+    $S1 = concat $S1, $S0
+    $S1 = concat $S1, ","
     goto loop
 end:
     is($S1, "11,13,15,", "iterator works on RPA subclass")
@@ -1148,6 +1163,38 @@ end:
 
     ok(1, "Push to subclassed array works")
 .end
+
+.sub test_assign_non_array
+    throws_substring(<<'CODE', "Can't set self from this type",'assign from non-array')
+    .sub main :main
+        .local pmc arr, other
+        .local int n
+        arr = new ['ResizablePMCArray']
+        other = new ['Integer']
+        assign arr, other
+    .end
+CODE
+.end
+
+.sub test_assign_self
+    .local pmc arr
+    arr = new ['ResizablePMCArray']
+    assign arr, arr
+    ok(1, 'Can assign ResizablePMCArray to itself')
+.end
+
+.sub test_assign_from_another
+    .local pmc arr1, arr2
+    .local int n
+    arr1 = new ['ResizablePMCArray']
+    arr1 = 32
+    arr2 = new ['ResizablePMCArray']
+    arr2 = 15
+    assign arr1, arr2
+    n = arr1
+    is(n,15,'assigning to ResizablePMCArray from another ResizablePMCArray')
+.end
+
 
 # don't forget to change the test plan
 

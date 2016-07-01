@@ -30,7 +30,7 @@ running compilers from a command line.
     $P0 = split ' ', 'parse past post pir evalpmc'
     setattribute self, '@stages', $P0
 
-    $P0 = split ' ', 'e=s help|h target=s dumper=s trace|t=s encoding=s output|o=s combine version|v stagestats'
+    $P0 = split ' ', 'e=s help|h target=s dumper=s trace|t=s encoding=s output|o=s combine version|v stagestats ll-backtrace'
     setattribute self, '@cmdoptions', $P0
 
     $P1 = box <<'    USAGE'
@@ -555,7 +555,7 @@ Transform PAST C<source> into POST.
 
     $P0 = compreg 'PIR'
     $P1 = $P0(source)
-    .return ($P1)
+    .return($P1)
 .end
 
 
@@ -646,7 +646,7 @@ specifies the encoding to use for the input (e.g., "utf8").
     code = stdin.'readline_interactive'(prompt)
     if null code goto interactive_end
     unless code goto interactive_loop
-    concat code, "\n"
+    code = concat code, "\n"
     push_eh interactive_trap
     $P0 = self.'eval'(code, adverbs :flat :named)
     pop_eh
@@ -754,7 +754,7 @@ options are passed to the evaluator.
     ifh.'encoding'(encoding)
   iter_loop_1:
     $S0 = ifh.'readall'(iname)
-    code .= $S0
+    code = concat code, $S0
     ifh.'close'()
     goto iter_loop
   iter_end:
@@ -855,9 +855,11 @@ Generic method for compilers invoked from a shell command line.
     $I0 = adverbs['version']
     if $I0 goto version
 
-    .local int can_backtrace
+    .local int can_backtrace, ll_backtrace
     can_backtrace = can self, 'backtrace'
     unless can_backtrace goto no_push_eh
+    ll_backtrace = adverbs['ll-backtrace']
+    if ll_backtrace goto no_push_eh
     push_eh uncaught_exception
   no_push_eh:
 
@@ -990,7 +992,7 @@ memoize the line offsets as a C<!lineof> property on C<target>.
     # find one, mark the ending offset of the line in C<linepos>.
   linepos_loop:
     jpos = find_cclass .CCLASS_NEWLINE, s, jpos, eos
-    unless jpos < eos goto linepos_done
+    unless jpos < eos goto linepos_done_1
     $I0 = ord s, jpos
     inc jpos
     push linepos, jpos
@@ -1000,23 +1002,27 @@ memoize the line offsets as a C<!lineof> property on C<target>.
     if $I0 != 10 goto linepos_loop
     inc jpos
     goto linepos_loop
+  linepos_done_1:
   linepos_done:
 
-    # We have C<linepos>, so now we search the array for the largest
-    # element that is not greater than C<pos>.  The index of that
-    # element is the line number to be returned.
-    # (Potential optimization: use a binary search.)
-    .local int line, count
-    count = elements linepos
-    line = 0
-  line_loop:
-    if line >= count goto line_done
+    # We have C<linepos>, so now we (binary) search the array
+    # for the largest element that is not greater than C<pos>.
+    .local int lo, hi, line
+    lo = 0
+    hi = elements linepos
+  binary_loop:
+    if lo >= hi goto binary_done
+    line = lo + hi
+    line = line / 2
     $I0 = linepos[line]
-    if $I0 > pos goto line_done
-    inc line
-    goto line_loop
-  line_done:
-    .return (line)
+    if $I0 > pos goto binary_hi
+    lo = line + 1
+    goto binary_loop
+  binary_hi:
+    hi = line
+    goto binary_loop
+  binary_done:
+    .return (lo)
 .end
 
 
